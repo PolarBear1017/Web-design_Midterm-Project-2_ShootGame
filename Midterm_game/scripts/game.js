@@ -122,6 +122,7 @@ class Game {
             }
         });
 
+        // 放開鍵盤按鍵，更新玩家移動速度
         window.addEventListener("keyup", (event) => {
             const key = event.code || event.key;
             this.keys[key] = false;
