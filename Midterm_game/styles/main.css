@@ -1,0 +1,13 @@
+canvas {
+    border:1px solid #d3d3d3;
+    background-color: #f1f1f1;
+}
+
+#hud span {
+    display: inline-block;
+    margin-top: 10px;
+    margin-right: 12px;
+    padding: 5px;
+    background-color: #d3d3d3;
+    border-radius: 4px;
+}

@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <script type="module" src="scripts/game.js"></script>
+</head>
+<body onload="prepareGame()">
+    <h1>My Game</h1>
+
+    <canvas id="gameCanvas"></canvas>
+
+    <div>
+        <button id="startButton">Start</button>
+        <button id="pauseButton">Pause</button>
+        <button id="resetButton">Reset</button>
+        <button id="fasterButton">Faster+</button>
+        <button id="slowerbutton">Slower-</button>
+    </div>
+
+    <div id="hud">
+        <span id="scoreDisplay">Score: 0</span>     <!-- span 行內元素 -->
+        <span id="livesDisplay">Lives: 5</span>
+        <span id="speedDisplay">Speed factor: 1x</span>
+        <span id="stateDisplay">State: Playing</span>
+    </div>
+
+    
+</body>
+</html>
