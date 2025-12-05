@@ -272,17 +272,6 @@ class Game {
         // 清除撞到的刀子/炸彈 與 飛出畫面的刀子/炸彈
         this.knives = this.knives.filter((k) => !k.hit && k.y + k.height > 0);
         this.bombs = this.bombs.filter((b) => !b.hit && !b.isOutOfBounds());
-
-        // bomb crashWith floor
-        this.bombs.forEach((bomb) => {
-            const hitFloor = bomb.y + bomb.height >= this.canvas.height;
-            if (hitFloor) {
-                bomb.hit = true;
-                this.live = Math.max(0, this.live - 1);
-                if (this.live <= 0) this.gameOver();
-            }
-        });
-        this.bombs = this.bombs.filter((b) => !b.hit && !b.isOutOfBounds());
     }
 
     // game over state
