@@ -1,4 +1,4 @@
-import { ComponentType } from "./component.js";
+import { Component, ComponentType } from "./component.js";
 import { Knife } from "./knife.js";
 import { Player } from "./player.js";
 import { Fruit } from "./fruit.js";
@@ -55,6 +55,8 @@ class Game {
         this.bombDropInterval = this.baseBombDropInterval;
         this.lastDropBombTime = 0;
         this.bombImage = "./assets/images/bomb/bomb.png";
+        this.bombExplosionImage = "./assets/images/bomb/bomb_explosion.png";
+        this.explosions = [];   // 炸彈爆炸效果
 
         // start button clicked
         const startButton = document.getElementById("startButton");
@@ -163,7 +165,7 @@ class Game {
 
         const isPlaying = this.state === GameState.PLAYING;
 
-        // GameState.GAME_OVER 或 PAUSED 都不刷新/移動水果與炸彈，但要保持畫面
+        // 除了playing的state 其他都不刷新/移動水果與炸彈，但要保持畫面
         if (isPlaying) {
             // fruit
             let now = performance.now();
@@ -195,6 +197,14 @@ class Game {
         // 總是繪製 (包括 PAUSED 狀態下仍保留畫面)
         this.fruits.forEach((f) => f.update());
         this.bombs.forEach((b) => b.update());
+        const now = performance.now();
+        this.explosions = this.explosions.filter((exp) => { // filter 會檢查每個爆炸物件的 expiresAt；時間到了 (now >= exp.expiresAt) 就回傳 false 把它移除。
+            if (now >= exp.expiresAt) {
+                return false;
+            }
+            exp.component.update();
+            return true;
+        });
         
         // 顯示score、lives
         document.getElementById("scoreDisplay").textContent = `Score: ${this.score}`;
@@ -223,6 +233,14 @@ class Game {
         // 讓現有掉落物同步新速度
         this.fruits.forEach((f) => (f.speedY *= ratio));
         this.bombs.forEach((b) => (b.speedY *= ratio));
+    }
+
+    addExplosion(x, y, width, height, durationMs = 500) {
+        const explosion = new Component(this, width, height, this.bombExplosionImage, x, y, ComponentType.IMAGE);
+        this.explosions.push({
+            component: explosion,
+            expiresAt: performance.now() + durationMs,
+        });
     }
 
     // 用來把玩家角色換成指定圖片 imagePath，可選擇在指定毫秒後自動換回預設 idle 圖。
@@ -284,6 +302,7 @@ class Game {
                 if (knife.crashWith(bomb)) {
                     bomb.hit = true;
                     knife.hit = true;
+                    this.addExplosion(bomb.x, bomb.y, bomb.width*2, bomb.height*2);
                     this.live = Math.max(0, this.live - 1); // 扣一命，避免負數
                     this.setPlayerImage(this.playerImages.hurt, 500);
                     if (this.live <= 0) {   // Game Over
@@ -303,11 +322,13 @@ class Game {
         // 若進入 game over，清空所有掉落物
         this.fruits = [];
         this.bombs = [];
+        this.explosions = [];
     }
     reset() {
         this.state = GameState.READY;
         // 清空所有掉落物
         this.fruits = [];
         this.bombs = [];
+        this.explosions = [];
     }
 }
