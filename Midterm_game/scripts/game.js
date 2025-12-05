@@ -21,8 +21,14 @@ class Game {
         this.context = this.canvas.getContext("2d");
         this.keys = {};
         this.knives = [];
-        this.player = new Player(this, 50, 80, "./assets/images/player/player.png", 350, 420);
-        this.registerInput();
+        this.playerImages = {
+            idle: "./assets/images/player/player.png",
+            attack: "./assets/images/player/player_attack.png",
+            hurt: "./assets/images/player/player_hurt.png",
+        };
+        this.player = new Player(this, 50, 80, this.playerImages.idle, 350, 420);
+        this.playerImageResetTimeout = null;
+        this.registerInput();   // 鍵盤滑鼠操控事件
 
         // drop fruit
         this.fruits = [];
@@ -138,6 +144,7 @@ class Game {
         const knifeImage = "./assets/images/weapons/knife.png";
         const knife = new Knife(this, knifeWidth, knifeHeight, knifeImage, startX, startY, ComponentType.IMAGE);
         knife.speedY -= 8;  // 向上
+        this.setPlayerImage(this.playerImages.attack, 200);
         this.knives.push(knife);
     }
 
@@ -218,6 +225,21 @@ class Game {
         this.bombs.forEach((b) => (b.speedY *= ratio));
     }
 
+    // 用來把玩家角色換成指定圖片 imagePath，可選擇在指定毫秒後自動換回預設 idle 圖。
+    setPlayerImage(imagePath, durationMs = null) {
+        this.player.setImage(imagePath);
+        if (this.playerImageResetTimeout) { // 換圖後會檢查是否已有等待恢復的計時器 (playerImageResetTimeout)，如果有就先清掉，避免舊的計時器把新狀態又改回去。
+            clearTimeout(this.playerImageResetTimeout);
+            this.playerImageResetTimeout = null;
+        }
+        if (durationMs !== null) {  // 如果呼叫時有給 durationMs（例如 200 或 500），就設定一個 setTimeout 在時間到時把圖片改回 this.playerImages.idle，並清除計時器記錄；若 durationMs 是 null，就只換圖不自動恢復。
+            this.playerImageResetTimeout = setTimeout(() => {
+                this.player.setImage(this.playerImages.idle);
+                this.playerImageResetTimeout = null;
+            }, durationMs);
+        }
+    }
+
     dropFruit() {
         const img = this.fruitImages[Math.floor(Math.random() * this.fruitImages.length)];
         const width = 40;
@@ -263,6 +285,7 @@ class Game {
                     bomb.hit = true;
                     knife.hit = true;
                     this.live = Math.max(0, this.live - 1); // 扣一命，避免負數
+                    this.setPlayerImage(this.playerImages.hurt, 500);
                     if (this.live <= 0) {   // Game Over
                         this.gameOver()
                     }
