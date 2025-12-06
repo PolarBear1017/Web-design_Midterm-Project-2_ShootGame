@@ -45,7 +45,7 @@ class Game {
 
         // drop heal prop
         this.heals = [];
-        this.baseHealDropInterval = 8000;
+        this.baseHealDropInterval = 10000;
         this.healDropInterval = this.baseHealDropInterval;
         this.lastDropHealTime = 0;
         this.healImage = "./assets/images/props/heal.png";
@@ -136,7 +136,7 @@ class Game {
 
     registerInput() {
         // 滑鼠操控 player
-        this.canvas.addEventListener("mousemove", (event) => {
+        window.addEventListener("mousemove", (event) => {
             const rect = this.canvas.getBoundingClientRect();
             const scaleX = this.canvas.width / rect.width;
 
@@ -160,8 +160,8 @@ class Game {
             }
         });
 
-        // 在canvas中 按下 滑鼠左鍵 發射 knife
-        this.canvas.addEventListener('mousedown', (e) => {
+        // 按下 滑鼠左鍵 發射 knife
+        window.addEventListener('mousedown', (e) => {
             if (e.button === 0) {   // 0 是左鍵
                 this.shootKnife();
             }

@@ -13,9 +13,9 @@ export class Player extends Component {
 
   updatePlayerSpeed(keys) {
     if (keys.ArrowLeft && !keys.ArrowRight) {
-      this.speedX = -5;
+      this.speedX = -15;
     } else if (keys.ArrowRight && !keys.ArrowLeft) {
-      this.speedX = 5;
+      this.speedX = 15;
     } else {
       this.speedX = 0;
     }
