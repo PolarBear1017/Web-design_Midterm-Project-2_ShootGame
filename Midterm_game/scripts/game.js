@@ -3,6 +3,7 @@ import { Knife } from "./knife.js";
 import { Player } from "./player.js";
 import { Fruit } from "./fruit.js";
 import { Bomb } from "./bomb.js";
+import { Prop } from "./prop.js";
 import { GameState } from "./gameState.js"
 
 let game;
@@ -41,6 +42,13 @@ class Game {
             "./assets/images/fruits/watermelon.png",
             "./assets/images/fruits/peach.png",
         ];  // 相對路徑
+
+        // drop heal prop
+        this.heals = [];
+        this.baseHealDropInterval = 8000;
+        this.healDropInterval = this.baseHealDropInterval;
+        this.lastDropHealTime = 0;
+        this.healImage = "./assets/images/props/heal.png";
 
         this.score = 0;
         this.live = 5;
@@ -211,11 +219,18 @@ class Game {
                 this.dropFruit();
                 this.lastDropFuritTime = now;
             }
+            if (now - this.lastDropHealTime > this.healDropInterval) {
+                this.dropHeal();
+                this.lastDropHealTime = now;
+            }
     
             this.fruits.forEach((f) => {
                 f.newPos();
             });
             this.fruits = this.fruits.filter((f) => !f.isOutOfBounds());
+            
+            this.heals.forEach((h) => h.newPos());
+            this.heals = this.heals.filter((h) => !h.isOutOfBounds());
 
             this.detectCrash(); // 判斷有沒有 Crash
 
@@ -234,6 +249,7 @@ class Game {
 
         // 總是繪製 (包括 PAUSED 狀態下仍保留畫面)
         this.fruits.forEach((f) => f.update());
+        this.heals.forEach((h) => h.update());
         this.bombs.forEach((b) => b.update());
         const now = performance.now();
         this.explosions = this.explosions.filter((exp) => { // filter 會檢查每個爆炸物件的 expiresAt；時間到了 (now >= exp.expiresAt) 就回傳 false 把它移除。
@@ -271,9 +287,11 @@ class Game {
         // 更新刷新間隔（倍率越高間隔越短）
         this.fruitDropInterval = this.baseFruitDropInterval / this.speedMultiplier;
         this.bombDropInterval = this.baseBombDropInterval / this.speedMultiplier;
+        this.healDropInterval = this.baseHealDropInterval / this.speedMultiplier;
 
         // 讓現有掉落物同步新速度
         this.fruits.forEach((f) => (f.speedY *= ratio));
+        this.heals.forEach((h) => (h.speedY *= ratio));
         this.bombs.forEach((b) => (b.speedY *= ratio));
     }
 
@@ -282,6 +300,7 @@ class Game {
         this.speedMultiplier = 1;
         this.fruitDropInterval = this.baseFruitDropInterval;
         this.bombDropInterval = this.baseBombDropInterval;
+        this.healDropInterval = this.baseHealDropInterval;
     }
 
     addExplosion(x, y, width, height, durationMs = 500) {
@@ -316,6 +335,16 @@ class Game {
         const speedY = (2 + Math.random() * 3) * this.speedMultiplier; // 2~5，隨倍率變化
         const fruit = new Fruit(this, width, height, img, x, y, speedY);
         this.fruits.push(fruit);
+    }
+
+    dropHeal() {
+        const width = 36;
+        const height = 36;
+        const x = Math.random() * (this.canvas.width - width);
+        const y = -height;
+        const speedY = (1.8 + Math.random() * 2.2) * this.speedMultiplier;
+        const heal = new Prop(this, width, height, this.healImage, x, y, speedY);
+        this.heals.push(heal);
     }
 
     dropBomb() {
@@ -493,6 +522,19 @@ class Game {
         // 清除撞到的刀子/炸彈 與 飛出畫面的刀子/炸彈
         this.knives = this.knives.filter((k) => !k.hit && k.y + k.height > 0);
         this.bombs = this.bombs.filter((b) => !b.hit && !b.isOutOfBounds());
+
+        // knife crashWith heal (補命道具)
+        this.knives.forEach((knife) => {
+            this.heals.forEach((heal) => {
+                if (knife.crashWith(heal)) {
+                    heal.hit = true;
+                    knife.hit = true;
+                    this.live += 1; // 增加一條命
+                }
+            });
+        });
+        this.knives = this.knives.filter((k) => !k.hit && k.y + k.height > 0);
+        this.heals = this.heals.filter((h) => !h.hit && !h.isOutOfBounds());
     }
 
     // game over state
@@ -500,6 +542,7 @@ class Game {
         this.state = GameState.GAME_OVER;
         // 若進入 game over，清空所有掉落物
         this.fruits = [];
+        this.heals = [];
         this.bombs = [];
         this.explosions = [];
         this.startTime = null;
@@ -508,6 +551,7 @@ class Game {
         this.state = GameState.READY;
         // 清空所有掉落物
         this.fruits = [];
+        this.heals = [];
         this.bombs = [];
         this.explosions = [];
         this.resetDifficulty();
