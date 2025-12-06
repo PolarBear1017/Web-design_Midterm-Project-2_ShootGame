@@ -1,13 +1,102 @@
-canvas {
-    border:1px solid #d3d3d3;
-    background-color: #f1f1f1;
+* {
+    box-sizing: border-box; /* 統一計算邊距含 padding 與 border */
+}
+
+body {
+    margin: 0; /* 清除預設外距 */
+    min-height: 100vh; /* 版面至少滿版高 */
+    display: flex; /* 垂直排版容器 */
+    flex-direction: column; /* 子元素直向排列 */
+    align-items: center; /* 子元素水平置中 */
+    gap: 16px; /* 區塊之間的間距 */
+    padding: 22px 16px 32px; /* 頂部/左右/底部內距 */
+    background: radial-gradient(circle at 20% 20%, #ffffff 0%, #e9f6ff 38%, #cfe8ff 68%, #b3d9ff 100%); /* 白到淺藍的放射狀漸層背景 */
+    font-family: "Trebuchet MS", "Gill Sans", "Segoe UI", sans-serif; /* 字型族群 */
+    color: #1d3557; /* 預設文字色 */
+}
+
+h1 {
+    margin: 0; /* 移除標題外距 */
+    font-size: 28px; /* 標題字級 */
+    letter-spacing: 1px; /* 字元間距 */
+    text-transform: uppercase; /* 全大寫 */
+    background: linear-gradient(120deg, #ffba52, #ff6f91, #63e6be); /* 標題文字漸層色 */
+    background-size: 200% 200%; /* 放大漸層以便動畫流動 */
+    -webkit-background-clip: text; /* 讓漸層只作用在文字 */
+    -webkit-text-fill-color: transparent; /* 文字本身透明，顯示漸層 */
+    animation: hueShift 6s linear infinite; /* 色相輪播動畫 */
+    text-shadow: 0 4px 18px rgba(0, 0, 0, 0.18); /* 柔和陰影 */
+}
+
+#gameCanvas {
+    border: 3px solid rgba(255, 255, 255, 0.7); /* 白色半透明描邊 */
+    border-radius: 18px; /* 圓角 */
+    box-shadow: 0 14px 40px rgba(0, 0, 0, 0.18), 0 4px 12px rgba(0, 0, 0, 0.12); /* 多層陰影 */
+    background: #f8fbff; /* 略帶淺藍的底色 */
+}
+
+#controls {
+    display: inline-flex; /* 水平排版按鈕 */
+    gap: 10px; /* 按鈕間距 */
+    padding: 10px 12px; /* 內距 */
+    background: rgba(255, 255, 255, 0.55); /* 半透明白底 */
+    border: 1px solid rgba(255, 255, 255, 0.8); /* 淡白邊框 */
+    border-radius: 14px; /* 圓角 */
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12); /* 外陰影 */
+    backdrop-filter: blur(6px); /* 玻璃模糊效果 */
+}
+
+button {
+    padding: 10px 14px; /* 按鈕內距 */
+    min-width: 88px; /* 最小寬度 */
+    border: none; /* 移除預設邊框 */
+    border-radius: 10px; /* 圓角 */
+    font-weight: 700; /* 粗體 */
+    color: #0b132b; /* 按鈕文字色 */
+    background: linear-gradient(145deg, #ffffff, #e7f0ff); /* 亮色漸層底 */
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15); /* 陰影 */
+    cursor: pointer; /* 指標變手形 */
+    transition: transform 120ms ease, box-shadow 180ms ease, filter 180ms ease; /* 滑動與陰影動畫 */
+}
+
+button:hover {
+    transform: translateY(-1px); /* 微浮起 */
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.18); /* 加強陰影 */
+    filter: brightness(1.03); /* 稍微增亮 */
+}
+
+button:active {
+    transform: translateY(0); /* 按下還原 */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.16) inset; /* 內陰影 */
+}
+
+#hud {
+    display: flex; /* HUD 水平/換行布局 */
+    flex-wrap: wrap; /* 空間不足時換行 */
+    gap: 8px; /* 元素間距 */
+    justify-content: center; /* 置中對齊 */
+    padding: 10px 14px; /* 內距 */
+    background: rgba(255, 255, 255, 0.52); /* 半透明白底 */
+    border: 1px solid rgba(255, 255, 255, 0.82); /* 淡白邊框 */
+    border-radius: 14px; /* 圓角 */
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.12); /* 外陰影 */
+    backdrop-filter: blur(6px); /* 玻璃模糊效果 */
 }
 
 #hud span {
-    display: inline-block;
-    margin-top: 10px;
-    margin-right: 12px;
-    padding: 5px;
-    background-color: #d3d3d3;
-    border-radius: 4px;
+    display: inline-flex; /* 行內彈性布局 */
+    align-items: center; /* 垂直置中 */
+    justify-content: center; /* 水平置中 */
+    padding: 8px 12px; /* 內距 */
+    min-width: 120px; /* 最小寬度 */
+    border-radius: 10px; /* 圓角 */
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.92), rgba(234, 243, 255, 0.9)); /* 淡色漸層底 */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08); /* 細緻陰影 */
+    font-weight: 700; /* 粗體 */
+    color: #1d3557; /* 字色 */
+}
+
+@keyframes hueShift {
+    0% { filter: hue-rotate(0deg); } /* 色相從 0 度開始 */ /* 這是 hueShift 動畫：讓套用它的元素持續做色相旋轉（0°→360°），形成不停變換顏色的效果。常用在漸層文字或背景上，讓色彩流動。 */
+    100% { filter: hue-rotate(360deg); } /* 色相旋轉一圈 */
 }
