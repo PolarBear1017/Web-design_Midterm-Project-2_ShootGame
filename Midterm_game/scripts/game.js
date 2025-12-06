@@ -61,6 +61,7 @@ class Game {
         this.backgroundImage.onload = () => {   // 表示當圖片資源成功載入時，執行箭頭函式. 這樣在 update() 裡可以先判斷 backgroundLoaded 再 drawImage，避免圖片還沒載好時繪製出錯或閃爍。
             this.backgroundLoaded = true;
         };
+        this.snowflakes = [];   // 雪花 array
 
         // drop bomb
         this.bombs = [];
@@ -110,6 +111,7 @@ class Game {
     start() {
         this.canvas.width = 800;
         this.canvas.height = 500;
+        this.snowflakes = this.createSnow(80); // 先設定好 canvas 尺寸，再生成雪花，避免初始只落在左側 (this.canvas.width 是預設值（約 300）)
         this.interval = setInterval(() => this.update(), 20);    // 50 times per second
     }
 
@@ -174,6 +176,7 @@ class Game {
             this.context.drawImage(this.backgroundImage, 0, 0, this.canvas.width, this.canvas.height);
             this.context.restore();
         }
+        this.updateSnow();
 
         this.player.newPos();
         this.player.update();
@@ -321,6 +324,41 @@ class Game {
         }
         this.lastDifficultyAt = now;
         this.adjustDropSpeed(this.difficultyStep);
+    }
+
+    // 生成初始雪花陣列
+    createSnow(count) {
+        const flakes = [];
+        for (let i = 0; i < count; i += 1) {
+            flakes.push({
+                x: Math.random() * this.canvas.width,
+                y: Math.random() * this.canvas.height,
+                radius: 1 + Math.random() * 2,
+                speedY: 0.5 + Math.random() * 1.5,
+                drift: (Math.random() - 0.5) * 0.5, // 設定雪花水平飄移的隨機值, -0.25 ~ 0.25。負值就向左飄，正值向右飄。
+            });
+        }
+        return flakes;
+    }
+
+    // 更新並繪製雪花；不受 gameState 影響，持續下雪
+    updateSnow() {
+        this.context.save();    // context.save() / restore()：暫存並還原畫布狀態，避免接下來的設定影響其他繪製。
+        this.context.fillStyle = "rgba(255, 255, 255, 0.8)";
+        this.snowflakes.forEach((flake) => {
+            flake.y += flake.speedY;
+            flake.x += flake.drift;
+            if (flake.y > this.canvas.height) { // 越界後從上方隨機位置重新落下。
+                flake.y = -flake.radius;
+                flake.x = Math.random() * this.canvas.width;
+            }
+            if (flake.x < 0) flake.x = this.canvas.width;   // 飄到最左邊，再從最右邊出現繼續飄
+            if (flake.x > this.canvas.width) flake.x = 0;   // 飄到最右邊，再從最左邊出現繼續飄
+            this.context.beginPath();
+            this.context.arc(flake.x, flake.y, flake.radius, 0, Math.PI * 2);
+            this.context.fill();
+        });
+        this.context.restore();
     }
 
     detectCrash() {
