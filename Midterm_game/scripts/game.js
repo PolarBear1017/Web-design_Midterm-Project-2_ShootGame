@@ -136,7 +136,7 @@ class Game {
 
     registerInput() {
         // 滑鼠操控 player
-        window.addEventListener("mousemove", (event) => {
+        this.canvas.addEventListener("mousemove", (event) => {
             const rect = this.canvas.getBoundingClientRect();
             const scaleX = this.canvas.width / rect.width;
 
@@ -161,7 +161,7 @@ class Game {
         });
 
         // 按下 滑鼠左鍵 發射 knife
-        window.addEventListener('mousedown', (e) => {
+        this.canvas.addEventListener('mousedown', (e) => {
             if (e.button === 0) {   // 0 是左鍵
                 this.shootKnife();
             }
