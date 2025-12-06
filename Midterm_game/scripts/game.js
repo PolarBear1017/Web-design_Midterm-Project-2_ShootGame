@@ -63,6 +63,12 @@ class Game {
         };
         this.snowflakes = [];   // 雪花 array
 
+        // 開場動畫
+        this.introActive = true;            // 開場動畫開關
+        this.introStartTime = performance.now();
+        this.introDuration = 2600;          // 動畫持續時間 (ms)
+        this.introTitle = "Fruit-slicing Game";
+
         // drop bomb
         this.bombs = [];
         this.baseBombDropInterval = 3000;
@@ -111,7 +117,12 @@ class Game {
     start() {
         this.canvas.width = 800;
         this.canvas.height = 500;
+
         this.snowflakes = this.createSnow(80); // 先設定好 canvas 尺寸，再生成雪花，避免初始只落在左側 (this.canvas.width 是預設值（約 300）)
+
+        this.introStartTime = performance.now();
+        this.introActive = true;
+
         this.interval = setInterval(() => this.update(), 20);    // 50 times per second
     }
 
@@ -232,6 +243,10 @@ class Game {
             exp.component.update();
             return true;
         });
+
+        // 開場動畫
+        this.drawIntro(now);
+        this.drawStateOverlay(now);
         
         // 顯示score、lives
         document.getElementById("scoreDisplay").textContent = `Score: ${this.score}`;
@@ -358,6 +373,88 @@ class Game {
             this.context.arc(flake.x, flake.y, flake.radius, 0, Math.PI * 2);
             this.context.fill();
         });
+        this.context.restore();
+    }
+
+    // 顯示 READY / PAUSED / GAME_OVER 的畫面提示
+    drawStateOverlay(now) {
+        if (this.introActive) return; // 開場動畫期間不顯示
+
+        let text = null;
+        switch (this.state) {
+            case GameState.READY:
+                text = "Press Start to begin";
+                break;
+            case GameState.PAUSED:
+                text = "Paused";
+                break;
+            case GameState.GAME_OVER:
+                text = "Game Over";
+                break;
+            default:
+                break;
+        }
+        if (!text) return;
+
+        const centerX = this.canvas.width / 2;
+        const centerY = this.canvas.height / 2 - 10;
+        const pulse = 0.98 + 0.04 * Math.sin(now / 240);    // 縮放跳動
+        const alpha = 0.8 + 0.2 * Math.sin(now / 500);   // 透明度跳動
+
+        this.context.save();
+        this.context.translate(centerX, centerY);
+        this.context.scale(pulse, pulse);
+        this.context.textAlign = "center";
+        this.context.textBaseline = "middle";
+        this.context.font = "bold 36px 'Trebuchet MS', 'Gill Sans', 'Segoe UI', sans-serif";
+
+        const gradient = this.context.createLinearGradient(-120, 0, 120, 0);
+        gradient.addColorStop(0, "#ffe062");
+        gradient.addColorStop(0.5, "#ff7a7a");
+        gradient.addColorStop(1, "#72e0d3");
+
+        this.context.globalAlpha = alpha;
+        this.context.fillStyle = gradient;
+        this.context.shadowColor = "rgba(0,0,0,0.35)";
+        this.context.shadowBlur = 16;
+        this.context.fillText(text, 0, 0);
+        this.context.restore();
+    }
+
+    // 繪製開場動畫（文字縮放＋閃爍），動畫結束後自動關閉
+    drawIntro(now) {
+        if (!this.introActive) return;
+        const elapsed = now - this.introStartTime;
+        const t = Math.min(1, elapsed / this.introDuration);
+        if (t >= 1) {
+            this.introActive = false;
+            return;
+        }
+
+        const centerX = this.canvas.width / 2;
+        const centerY = this.canvas.height / 2 - 20;
+
+        const scale = 0.94 + 0.18 * Math.sin(t * Math.PI * 4); // 在 0.94~1.12 之間跳動
+        const alpha = 1 - t * 1.1; // 漸淡
+
+        this.context.save();
+        this.context.translate(centerX, centerY);
+        this.context.scale(scale, scale);
+        this.context.textAlign = "center";
+        this.context.textBaseline = "middle";
+
+        const gradient = this.context.createLinearGradient(-140, 0, 140, 0);
+        gradient.addColorStop(0, "#ffdc5e");
+        gradient.addColorStop(0.5, "#ff5e7a");
+        gradient.addColorStop(1, "#5ae0c0");
+
+        this.context.globalAlpha = Math.max(0, alpha);
+        this.context.font = "bold 48px 'Trebuchet MS', 'Gill Sans', 'Segoe UI', sans-serif";
+        this.context.fillStyle = gradient;
+        this.context.shadowColor = "rgba(0,0,0,0.35)";
+        this.context.shadowBlur = 18;
+        this.context.fillText(this.introTitle, 0, 0);
+
         this.context.restore();
     }
 
