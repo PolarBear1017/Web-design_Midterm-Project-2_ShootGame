@@ -49,6 +49,19 @@ class Game {
         this.minSpeedMultiplier = 0.5;
         this.maxSpeedMultiplier = 3;
 
+        // 隨時間增加遊戲難度
+        this.difficultyTickMs = 5000;       // 每 5 秒提升一次難度
+        this.difficultyStep = 0.1;          // 每次提升多少倍率
+        this.lastDifficultyAt = 0;
+        this.startTime = null;
+        this.backgroundImage = new Image();
+        this.backgroundImage.src = "./assets/images/background/snowfield.png";
+        this.backgroundLoaded = false;
+        this.backgroundAlpha = 0.8;         // 背景透明度（0~1）
+        this.backgroundImage.onload = () => {   // 表示當圖片資源成功載入時，執行箭頭函式. 這樣在 update() 裡可以先判斷 backgroundLoaded 再 drawImage，避免圖片還沒載好時繪製出錯或閃爍。
+            this.backgroundLoaded = true;
+        };
+
         // drop bomb
         this.bombs = [];
         this.baseBombDropInterval = 3000;
@@ -64,6 +77,9 @@ class Game {
             this.state = GameState.PLAYING;
             this.score = 0;
             this.live = 5;
+            this.resetDifficulty();
+            this.startTime = performance.now();
+            this.lastDifficultyAt = this.startTime;
         });
 
         // pause button clicked
@@ -152,6 +168,12 @@ class Game {
 
     update() {
         this.clear();
+        if (this.backgroundLoaded) {
+            this.context.save();    // context.save() / restore()：暫存並還原畫布狀態，避免接下來的設定影響其他繪製。
+            this.context.globalAlpha = this.backgroundAlpha;    // 設定全局透明度（0~1），讓背景以指定透明度畫出。
+            this.context.drawImage(this.backgroundImage, 0, 0, this.canvas.width, this.canvas.height);
+            this.context.restore();
+        }
 
         this.player.newPos();
         this.player.update();
@@ -167,6 +189,8 @@ class Game {
 
         // 除了playing的state 其他都不刷新/移動水果與炸彈，但要保持畫面
         if (isPlaying) {
+            this.maybeScaleDifficulty();
+
             // fruit
             let now = performance.now();
             if (now - this.lastDropFuritTime > this.fruitDropInterval) {
@@ -235,6 +259,13 @@ class Game {
         this.bombs.forEach((b) => (b.speedY *= ratio));
     }
 
+    // 重置倍率與刷新間隔，用於重新開始或重置遊戲
+    resetDifficulty() {
+        this.speedMultiplier = 1;
+        this.fruitDropInterval = this.baseFruitDropInterval;
+        this.bombDropInterval = this.baseBombDropInterval;
+    }
+
     addExplosion(x, y, width, height, durationMs = 500) {
         const explosion = new Component(this, width, height, this.bombExplosionImage, x, y, ComponentType.IMAGE);
         this.explosions.push({
@@ -277,6 +308,19 @@ class Game {
         const speedY = (2 + Math.random() * 3) * this.speedMultiplier; // 2~5，隨倍率變化
         const bomb = new Bomb(this, width, height, this.bombImage, x, y, speedY);
         this.bombs.push(bomb);
+    }
+
+    // 依經過時間提升難度（加快掉落倍率與生成頻率）
+    maybeScaleDifficulty() {
+        if (this.speedMultiplier >= this.maxSpeedMultiplier) {
+            return;
+        }
+        const now = performance.now();
+        if (now - this.lastDifficultyAt < this.difficultyTickMs) {
+            return;
+        }
+        this.lastDifficultyAt = now;
+        this.adjustDropSpeed(this.difficultyStep);
     }
 
     detectCrash() {
@@ -323,6 +367,7 @@ class Game {
         this.fruits = [];
         this.bombs = [];
         this.explosions = [];
+        this.startTime = null;
     }
     reset() {
         this.state = GameState.READY;
@@ -330,5 +375,7 @@ class Game {
         this.fruits = [];
         this.bombs = [];
         this.explosions = [];
+        this.resetDifficulty();
+        this.startTime = null;
     }
 }
